@@ -1,4 +1,4 @@
-package rx.android;
+package com.example.rx;
 
 import android.view.View;
 import android.widget.ArrayAdapter;

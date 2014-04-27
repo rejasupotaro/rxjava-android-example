@@ -1,5 +1,6 @@
-package com.example.rx;
+package com.example.rx.activities;
 
+import com.example.rx.R;
 import com.example.rx.models.Message;
 
 import android.app.Activity;
@@ -17,8 +18,8 @@ import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import rx.Observable;
-import rx.android.Events;
-import rx.android.Properties;
+import com.example.rx.Events;
+import com.example.rx.Properties;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
