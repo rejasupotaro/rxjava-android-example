@@ -7,12 +7,13 @@ import android.widget.TextView;
 import java.util.List;
 
 import rx.Observable;
-import rx.util.functions.Action1;
+import rx.functions.Action1;
 
 public final class Properties {
 
     // no instances of helper class
-    private Properties() { }
+    private Properties() {
+    }
 
     /**
      * Updates the <em>enabled</em> property of a view for each event received.
@@ -36,6 +37,7 @@ public final class Properties {
     }
 
     public static class EnabledProperty implements Action1<Boolean> {
+
         private final View view;
 
         private EnabledProperty(View view) {
@@ -46,12 +48,14 @@ public final class Properties {
             observable.subscribe(this);
         }
 
-        @Override public void call(Boolean enabled) {
+        @Override
+        public void call(Boolean enabled) {
             view.setEnabled(enabled);
         }
     }
 
     public static class TextProperty implements Action1<String> {
+
         private final TextView view;
 
         private TextProperty(TextView view) {
@@ -62,12 +66,14 @@ public final class Properties {
             observable.subscribe(this);
         }
 
-        @Override public void call(String text) {
+        @Override
+        public void call(String text) {
             view.setText(text);
         }
     }
 
     public static class ArrayAdapterProperty<T> implements Action1<List<T>> {
+
         private final ArrayAdapter<T> adapter;
 
         ArrayAdapterProperty(ArrayAdapter<T> adapter) {
@@ -78,7 +84,8 @@ public final class Properties {
             observable.subscribe(this);
         }
 
-        @Override public void call(List<T> items) {
+        @Override
+        public void call(List<T> items) {
             adapter.clear();
             for (T item : items) {
                 adapter.add(item);

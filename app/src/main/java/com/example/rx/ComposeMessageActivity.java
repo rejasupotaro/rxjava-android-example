@@ -1,103 +1,177 @@
 package com.example.rx;
 
+import com.example.rx.models.Message;
+
 import android.app.Activity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import rx.Observable;
 import rx.android.Events;
 import rx.android.Properties;
-import rx.util.functions.Action1;
-import rx.util.functions.Func1;
-import rx.util.functions.Func2;
+import rx.functions.Action1;
+import rx.functions.Func1;
+import rx.functions.Func2;
 
 public class ComposeMessageActivity extends Activity {
 
-    @Override protected void onCreate(Bundle savedInstanceState) {
+    @InjectView(R.id.phone_number_edit)
+    EditText phoneNumberEditText;
+
+    @InjectView(R.id.message_body_edit)
+    EditText messageBodyEditText;
+
+    @InjectView(R.id.remaining_characters_text)
+    TextView remainingCharactersTextView;
+
+    @InjectView(R.id.send_message_button)
+    Button sendMessageButton;
+
+    @InjectView(R.id.message_list)
+    ListView messageListView;
+
+    private ArrayAdapter<String> messageListAdapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.compose_message);
+        setContentView(R.layout.activity_compose_message);
+        ButterKnife.inject(this);
 
-        final EditText phoneNumber = (EditText) findViewById(R.id.phone_number);
-        final EditText messageBody = (EditText) findViewById(R.id.message_body);
-        final TextView remainingCharacters = (TextView) findViewById(R.id.remaining_characters);
-        final Button sendMessage = (Button) findViewById(R.id.send_message);
+        setupUsingRx();
+        //setupNotUsingRx();
+    }
 
-        final Observable<String> phoneNumberText  = Events.text(phoneNumber);
-        final Observable<String> messageBodyText  = Events.text(messageBody);
-        final Observable<Object> sendMessageClick = Events.click(sendMessage);
+    private void setupUsingRx() {
+        final Observable<String> phoneNumberText = Events.text(phoneNumberEditText);
+        final Observable<String> messageBodyText = Events.text(messageBodyEditText);
+        final Observable<Object> sendMessageClick = Events.click(sendMessageButton);
 
-        // send button is only enabled when we have some message body content
         messageBodyText
                 .map(new Func1<String, Boolean>() {
-                    @Override public Boolean call(String text) {
+                    @Override
+                    public Boolean call(String text) {
                         return !text.trim().equals("");
                     }
                 })
-                .subscribe(Properties.enabledFrom(sendMessage));
+                .subscribe(Properties.enabledFrom(sendMessageButton));
 
-        // counts remaining characters of body
         final int maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
         messageBodyText
                 .map(new Func1<String, Integer>() {
-                    @Override public Integer call(String text) {
+                    @Override
+                    public Integer call(String text) {
                         return maxBodyLength - text.length();
                     }
                 })
                 .map(new Func1<Integer, String>() {
-                    @Override public String call(Integer remainingChars) {
-                        return getString(R.string.remaining_characters_text, remainingChars, maxBodyLength);
+                    @Override
+                    public String call(Integer remainingChars) {
+                        return getString(R.string.remaining_characters_text, remainingChars,
+                                maxBodyLength);
                     }
                 })
-                .subscribe(Properties.textFrom(remainingCharacters));
+                .subscribe(Properties.textFrom(remainingCharactersTextView));
 
-        // transforms clicks into messages, using the most recent information
-        // for messages with blank phone number take focus to phone number edit text
-        // for complete messages, we show it as a Toast and cleanup message body edit text
-        // side-effects yay!
         sendMessageClick
                 .flatMap(new Func1<Object, Observable<Message>>() {
-                    @Override public Observable<Message> call(Object _) {
+                    @Override
+                    public Observable<Message> call(Object _) {
                         return Observable.combineLatest(
                                 phoneNumberText,
                                 messageBodyText,
                                 new Func2<String, String, Message>() {
-                                    @Override public Message call(String phoneNumber, String messageBody) {
+                                    @Override
+                                    public Message call(String phoneNumber, String messageBody) {
                                         return new Message(phoneNumber, messageBody);
                                     }
-                                })
-                                .take(1);
+                                }
+                        ).take(1);
                     }
                 })
                 .subscribe(new Action1<Message>() {
-                    @Override public void call(Message message) {
-                        if (message.phoneNumber.trim().equals("")) {
-                            phoneNumber.requestFocus();
+                    @Override
+                    public void call(Message message) {
+                        if (message.getPhoneNumber().trim().equals("")) {
+                            phoneNumberEditText.requestFocus();
                         } else {
-                            messageBody.setText("");
-                            Toast.makeText(
-                                    ComposeMessageActivity.this,
-                                    message.toString(),
-                                    Toast.LENGTH_SHORT
-                            ).show();
+                            messageBodyEditText.setText("");
+                            messageListAdapter.add(message.getMessageBody());
                         }
                     }
                 });
+
+        messageListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        messageListView.setAdapter(messageListAdapter);
     }
 
-    class Message {
-        private final String phoneNumber;
-        private final String messageBody;
+    private void setupNotUsingRx() {
+        final int maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
+        String remainingCharactersText = getString(
+                R.string.remaining_characters_text,
+                maxBodyLength,
+                maxBodyLength);
+        remainingCharactersTextView.setText(remainingCharactersText);
 
-        public Message(String phoneNumber, String messageBody) {
-            this.phoneNumber = phoneNumber;
-            this.messageBody = messageBody;
-        }
+        messageBodyEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+            }
 
-        @Override public String toString() {
-            return phoneNumber + " : " + messageBody;
-        }
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                String text = editable.toString();
+                if (TextUtils.isEmpty(text)) {
+                    sendMessageButton.setEnabled(false);
+                } else {
+                    sendMessageButton.setEnabled(true);
+
+                    int remainingChars = maxBodyLength - text.length();
+                    String remainingCharactersText = getString(
+                            R.string.remaining_characters_text,
+                            remainingChars,
+                            maxBodyLength);
+                    remainingCharactersTextView.setText(remainingCharactersText);
+                }
+            }
+        });
+
+        sendMessageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String phoneNumberText = phoneNumberEditText.getText().toString();
+                if (phoneNumberText.trim().equals("")) {
+                    phoneNumberEditText.requestFocus();
+                } else {
+                    String text = messageBodyEditText.getText().toString();
+                    messageBodyEditText.setText("");
+
+                    String remainingCharactersText = getString(
+                            R.string.remaining_characters_text,
+                            maxBodyLength,
+                            maxBodyLength);
+                    remainingCharactersTextView.setText(remainingCharactersText);
+
+                    messageListAdapter.add(text);
+                }
+            }
+        });
+
+        messageListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        messageListView.setAdapter(messageListAdapter);
     }
 }
