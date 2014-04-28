@@ -33,7 +33,7 @@ public final class Properties {
      * Clear, update and notify changes of dataset for {@code ArrayAdapter}.
      */
     public static <T> ArrayAdapterProperty<T> dataSetFrom(ArrayAdapter<T> adapter) {
-        return new ArrayAdapterProperty<T>(adapter);
+        return new ArrayAdapterProperty<>(adapter);
     }
 
     public static class EnabledProperty implements Action1<Boolean> {

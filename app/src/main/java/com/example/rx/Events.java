@@ -44,13 +44,10 @@ public class Events {
     /*
      * Creates a subject that emits events for each click on view
      */
-    public static Observable<Object> click(View view) {
+    public static Observable<Object> click(View target) {
         val subject = PublishSubject.create();
-        view.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                subject.onNext(new Object());
-            }
+        target.setOnClickListener((view) -> {
+            subject.onNext(new Object());
         });
         return subject;
     }
@@ -58,14 +55,9 @@ public class Events {
     /*
      * Creates a subject that emits events for item clicks of list views
      */
-    public static Observable<Integer> itemClick(AbsListView view) {
+    public static Observable<Integer> itemClick(AbsListView target) {
         final PublishSubject<Integer> subject = PublishSubject.create();
-        view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                subject.onNext(position);
-            }
-        });
+        target.setOnItemClickListener((adapterView, view, position, l) -> subject.onNext(position));
         return subject;
     }
 }
