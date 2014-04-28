@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import lombok.val;
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -51,15 +52,15 @@ public class ComposeMessageActivity extends Activity {
     }
 
     private void setupUsingRx() {
-        final Observable<String> phoneNumberText = Events.text(phoneNumberEditText);
-        final Observable<String> messageBodyText = Events.text(messageBodyEditText);
-        final Observable<Object> sendMessageClick = Events.click(sendMessageButton);
+        val phoneNumberText = Events.text(phoneNumberEditText);
+        val messageBodyText = Events.text(messageBodyEditText);
+        val sendMessageClick = Events.click(sendMessageButton);
 
         messageBodyText
                 .map(text -> !text.trim().equals(""))
                 .subscribe(Properties.enabledFrom(sendMessageButton));
 
-        final int maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
+        val maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
         messageBodyText
                 .map(text -> maxBodyLength - text.length())
                 .map(remainingChars -> getString(R.string.remaining_characters_text, remainingChars,
