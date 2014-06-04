@@ -1,7 +1,5 @@
 package com.example.rx.activities;
 
-import com.example.rx.Events;
-import com.example.rx.Properties;
 import com.example.rx.R;
 import com.example.rx.models.Message;
 
@@ -10,6 +8,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,7 +18,11 @@ import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import rx.Observable;
+import com.example.rx.Events;
+import com.example.rx.Properties;
+import rx.functions.Action1;
 import rx.functions.Func1;
+import rx.functions.Func2;
 
 public class ComposeMessageActivity extends Activity {
 
@@ -56,41 +59,70 @@ public class ComposeMessageActivity extends Activity {
         final Observable<Object> sendMessageClick = Events.click(sendMessageButton);
 
         messageBodyText
-                .map(text -> !text.trim().equals(""))
+                .map(new Func1<String, Boolean>() {
+                    @Override
+                    public Boolean call(String text) {
+                        return !text.trim().equals("");
+                    }
+                })
                 .subscribe(Properties.enabledFrom(sendMessageButton));
 
         final int maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
         messageBodyText
-                .map(text -> maxBodyLength - text.length())
-                .map(remainingChars -> getString(R.string.remaining_characters_text, remainingChars,
-                        maxBodyLength))
+                .map(new Func1<String, Integer>() {
+                    @Override
+                    public Integer call(String text) {
+                        return maxBodyLength - text.length();
+                    }
+                })
+                .map(new Func1<Integer, String>() {
+                    @Override
+                    public String call(Integer remainingChars) {
+                        return getString(R.string.remaining_characters_text, remainingChars,
+                                maxBodyLength);
+                    }
+                })
                 .subscribe(Properties.textFrom(remainingCharactersTextView));
 
         sendMessageClick
-                .flatMap(o -> Observable.combineLatest(
-                        phoneNumberText,
-                        messageBodyText,
-                        Message::new
-                ).take(1))
-                .subscribe(message -> {
-                    if (message.getPhoneNumber().trim().equals("")) {
-                        phoneNumberEditText.requestFocus();
-                    } else {
-                        messageBodyEditText.setText("");
-                        messageListAdapter.add(message.getMessageBody());
+                .flatMap(new Func1<Object, Observable<Message>>() {
+                    @Override
+                    public Observable<Message> call(Object _) {
+                        return Observable.combineLatest(
+                                phoneNumberText,
+                                messageBodyText,
+                                new Func2<String, String, Message>() {
+                                    @Override
+                                    public Message call(String phoneNumber, String messageBody) {
+                                        return new Message(phoneNumber, messageBody);
+                                    }
+                                }
+                        ).take(1);
+                    }
+                })
+                .subscribe(new Action1<Message>() {
+                    @Override
+                    public void call(Message message) {
+                        if (message.getPhoneNumber().trim().equals("")) {
+                            phoneNumberEditText.requestFocus();
+                        } else {
+                            messageBodyEditText.setText("");
+                            messageListAdapter.add(message.getMessageBody());
+                        }
                     }
                 });
 
-        messageListAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        messageListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         messageListView.setAdapter(messageListAdapter);
     }
 
     private void setupNotUsingRx() {
         final int maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
-        remainingCharactersTextView.setText(getString(
+        String remainingCharactersText = getString(
                 R.string.remaining_characters_text,
                 maxBodyLength,
-                maxBodyLength));
+                maxBodyLength);
+        remainingCharactersTextView.setText(remainingCharactersText);
 
         messageBodyEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -119,25 +151,28 @@ public class ComposeMessageActivity extends Activity {
             }
         });
 
-        sendMessageButton.setOnClickListener((view) -> {
-            String phoneNumberText = phoneNumberEditText.getText().toString();
-            if (phoneNumberText.trim().equals("")) {
-                phoneNumberEditText.requestFocus();
-            } else {
-                String text = messageBodyEditText.getText().toString();
-                messageBodyEditText.setText("");
+        sendMessageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String phoneNumberText = phoneNumberEditText.getText().toString();
+                if (phoneNumberText.trim().equals("")) {
+                    phoneNumberEditText.requestFocus();
+                } else {
+                    String text = messageBodyEditText.getText().toString();
+                    messageBodyEditText.setText("");
 
-                String remainingCharactersText = getString(
-                        R.string.remaining_characters_text,
-                        maxBodyLength,
-                        maxBodyLength);
-                remainingCharactersTextView.setText(remainingCharactersText);
+                    String remainingCharactersText = getString(
+                            R.string.remaining_characters_text,
+                            maxBodyLength,
+                            maxBodyLength);
+                    remainingCharactersTextView.setText(remainingCharactersText);
 
-                messageListAdapter.add(text);
+                    messageListAdapter.add(text);
+                }
             }
         });
 
-        messageListAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        messageListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         messageListView.setAdapter(messageListAdapter);
     }
 }
