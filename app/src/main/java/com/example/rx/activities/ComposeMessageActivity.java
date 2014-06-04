@@ -24,8 +24,6 @@ import rx.functions.Func1;
 
 public class ComposeMessageActivity extends Activity {
 
-    private static final int MAX_BODY_LENGTH = 160;
-
     @InjectView(R.id.phone_number_edit)
     EditText phoneNumberEditText;
 
@@ -62,20 +60,19 @@ public class ComposeMessageActivity extends Activity {
                 .map(text -> !text.trim().equals(""))
                 .subscribe(Properties.enabledFrom(sendMessageButton));
 
+        val maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
         messageBodyText
-                .map(text -> MAX_BODY_LENGTH - text.length())
-                .map(remainingChars -> getString(
-                        R.string.remaining_characters_text,
-                        remainingChars,
-                        MAX_BODY_LENGTH))
+                .map(text -> maxBodyLength - text.length())
+                .map(remainingChars -> getString(R.string.remaining_characters_text, remainingChars,
+                        maxBodyLength))
                 .subscribe(Properties.textFrom(remainingCharactersTextView));
 
         sendMessageClick
                 .flatMap(o -> Observable.combineLatest(
                         phoneNumberText,
                         messageBodyText,
-                        Message::new)
-                .take(1))
+                        Message::new
+                ).take(1))
                 .subscribe(message -> {
                     if (message.getPhoneNumber().trim().equals("")) {
                         phoneNumberEditText.requestFocus();
@@ -90,10 +87,11 @@ public class ComposeMessageActivity extends Activity {
     }
 
     private void setupNotUsingRx() {
+        final int maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
         remainingCharactersTextView.setText(getString(
                 R.string.remaining_characters_text,
-                MAX_BODY_LENGTH,
-                MAX_BODY_LENGTH));
+                maxBodyLength,
+                maxBodyLength));
 
         messageBodyEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -112,11 +110,11 @@ public class ComposeMessageActivity extends Activity {
                 } else {
                     sendMessageButton.setEnabled(true);
 
-                    int remainingChars = MAX_BODY_LENGTH - text.length();
+                    int remainingChars = maxBodyLength - text.length();
                     String remainingCharactersText = getString(
                             R.string.remaining_characters_text,
                             remainingChars,
-                            MAX_BODY_LENGTH);
+                            maxBodyLength);
                     remainingCharactersTextView.setText(remainingCharactersText);
                 }
             }
@@ -132,8 +130,8 @@ public class ComposeMessageActivity extends Activity {
 
                 String remainingCharactersText = getString(
                         R.string.remaining_characters_text,
-                        MAX_BODY_LENGTH,
-                        MAX_BODY_LENGTH);
+                        maxBodyLength,
+                        maxBodyLength);
                 remainingCharactersTextView.setText(remainingCharactersText);
 
                 messageListAdapter.add(text);
