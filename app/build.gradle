@@ -9,17 +9,17 @@ buildscript {
 apply plugin: 'android'
 
 android {
-    compileSdkVersion 18
+    compileSdkVersion 19
     buildToolsVersion "19.0.3"
 
     defaultConfig {
         minSdkVersion 8
-        targetSdkVersion 17
+        targetSdkVersion 19
     }
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:18.0.0'
+    compile 'com.android.support:appcompat-v7:19.1.0'
     compile 'com.netflix.rxjava:rxjava-android:0.18.+'
     compile 'com.jakewharton:butterknife:5.0.0'
 }
