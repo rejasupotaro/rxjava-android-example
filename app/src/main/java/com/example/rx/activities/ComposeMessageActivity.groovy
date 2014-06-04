@@ -50,7 +50,6 @@ public class ComposeMessageActivity extends Activity {
         ButterKnife.inject(this);
 
         setupUsingRx();
-        //setupNotUsingRx();
     }
 
     private void setupUsingRx() {
@@ -111,66 +110,6 @@ public class ComposeMessageActivity extends Activity {
                         }
                     }
                 });
-
-        messageListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        messageListView.setAdapter(messageListAdapter);
-    }
-
-    private void setupNotUsingRx() {
-        final int maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
-        String remainingCharactersText = getString(
-                R.string.remaining_characters_text,
-                maxBodyLength,
-                maxBodyLength);
-        remainingCharactersTextView.setText(remainingCharactersText);
-
-        messageBodyEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                String text = editable.toString();
-                if (TextUtils.isEmpty(text)) {
-                    sendMessageButton.setEnabled(false);
-                } else {
-                    sendMessageButton.setEnabled(true);
-
-                    int remainingChars = maxBodyLength - text.length();
-                    remainingCharactersText = getString(
-                            R.string.remaining_characters_text,
-                            remainingChars,
-                            maxBodyLength);
-                    remainingCharactersTextView.setText(remainingCharactersText);
-                }
-            }
-        });
-
-        sendMessageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String phoneNumberText = phoneNumberEditText.getText().toString();
-                if (phoneNumberText.trim().equals("")) {
-                    phoneNumberEditText.requestFocus();
-                } else {
-                    String text = messageBodyEditText.getText().toString();
-                    messageBodyEditText.setText("");
-
-                    remainingCharactersText = getString(
-                            R.string.remaining_characters_text,
-                            maxBodyLength,
-                            maxBodyLength);
-                    remainingCharactersTextView.setText(remainingCharactersText);
-
-                    messageListAdapter.add(text);
-                }
-            }
-        });
 
         messageListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         messageListView.setAdapter(messageListAdapter);
