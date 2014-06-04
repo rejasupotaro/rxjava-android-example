@@ -142,7 +142,7 @@ public class ComposeMessageActivity extends Activity {
                     sendMessageButton.setEnabled(true);
 
                     int remainingChars = maxBodyLength - text.length();
-                    String remainingCharactersText = getString(
+                    remainingCharactersText = getString(
                             R.string.remaining_characters_text,
                             remainingChars,
                             maxBodyLength);
@@ -161,7 +161,7 @@ public class ComposeMessageActivity extends Activity {
                     String text = messageBodyEditText.getText().toString();
                     messageBodyEditText.setText("");
 
-                    String remainingCharactersText = getString(
+                    remainingCharactersText = getString(
                             R.string.remaining_characters_text,
                             maxBodyLength,
                             maxBodyLength);
