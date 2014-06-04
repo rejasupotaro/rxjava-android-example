@@ -87,7 +87,7 @@ public class ComposeMessageActivity extends Activity {
         sendMessageClick
                 .flatMap(new Func1<Object, Observable<Message>>() {
                     @Override
-                    public Observable<Message> call(Object _) {
+                    public Observable<Message> call(Object object) {
                         return Observable.combineLatest(
                                 phoneNumberText,
                                 messageBodyText,

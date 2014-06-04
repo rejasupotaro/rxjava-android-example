@@ -7,7 +7,6 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.TextView;
 
-import lombok.val;
 import rx.Observable;
 import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
@@ -22,8 +21,8 @@ public class Events {
      * Creates a subject that emits events for the current text and each text change event
      */
     public static Observable<String> text(TextView view) {
-        val currentText = String.valueOf(view.getText());
-        val subject = BehaviorSubject.create(currentText);
+        String currentText = String.valueOf(view.getText());
+        final BehaviorSubject<String> subject = BehaviorSubject.create(currentText);
         view.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i2, int i3) {
@@ -45,7 +44,7 @@ public class Events {
      * Creates a subject that emits events for each click on view
      */
     public static Observable<Object> click(View view) {
-        val subject = PublishSubject.create();
+        final PublishSubject<Object> subject = PublishSubject.create();
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
