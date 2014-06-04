@@ -1,5 +1,17 @@
-subprojects {
+buildscript {
     repositories {
         mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.9.+'
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        jcenter()
     }
 }
