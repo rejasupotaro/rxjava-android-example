@@ -1,117 +1,77 @@
-package com.example.rx.activities;
+package com.example.rx.activities
 
-import com.example.rx.R;
-import com.example.rx.models.Message;
+import android.app.Activity
+import android.os.Bundle
+import android.widget.*
+import com.example.rx.Events
+import com.example.rx.Properties
+import com.example.rx.R
+import com.example.rx.models.Message
+import rx.Observable
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.TextView;
+class ComposeMessageActivity extends Activity {
 
-import butterknife.ButterKnife;
-import butterknife.InjectView;
-import rx.Observable;
-import com.example.rx.Events;
-import com.example.rx.Properties;
-import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.functions.Func2;
-
-public class ComposeMessageActivity extends Activity {
-
-    @InjectView(R.id.phone_number_edit)
-    EditText phoneNumberEditText;
-
-    @InjectView(R.id.message_body_edit)
-    EditText messageBodyEditText;
-
-    @InjectView(R.id.remaining_characters_text)
-    TextView remainingCharactersTextView;
-
-    @InjectView(R.id.send_message_button)
-    Button sendMessageButton;
-
-    @InjectView(R.id.message_list)
-    ListView messageListView;
-
-    private ArrayAdapter<String> messageListAdapter;
+    private EditText phoneNumberEditText
+    private EditText messageBodyEditText
+    private TextView remainingCharactersTextView
+    private Button sendMessageButton
+    private ListView messageListView
+    private ArrayAdapter<String> messageListAdapter
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_compose_message);
-        ButterKnife.inject(this);
-
-        setupUsingRx();
+    void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_compose_message)
+        findViews()
+        setupViews()
+        setDummyData()
     }
 
-    private void setupUsingRx() {
-        final Observable<String> phoneNumberText = Events.text(phoneNumberEditText);
-        final Observable<String> messageBodyText = Events.text(messageBodyEditText);
-        final Observable<Object> sendMessageClick = Events.click(sendMessageButton);
+    private void findViews() {
+        phoneNumberEditText = findViewById(R.id.phone_number_edit)
+        messageBodyEditText = findViewById(R.id.message_body_edit)
+        remainingCharactersTextView = findViewById(R.id.remaining_characters_text)
+        sendMessageButton = findViewById(R.id.send_message_button)
+        messageListView = findViewById(R.id.message_list)
+    }
+
+    private void setupViews() {
+        def phoneNumberText = Events.text(phoneNumberEditText)
+        def messageBodyText = Events.text(messageBodyEditText)
+        def sendMessageClick = Events.click(sendMessageButton)
 
         messageBodyText
-                .map(new Func1<String, Boolean>() {
-                    @Override
-                    public Boolean call(String text) {
-                        return !text.trim().equals("");
-                    }
-                })
-                .subscribe(Properties.enabledFrom(sendMessageButton));
+                .map({ text -> !text.trim().equals("") })
+                .subscribe(Properties.enabledFrom(sendMessageButton))
 
-        final int maxBodyLength = getResources().getInteger(R.integer.message_body_max_length);
+        def maxBodyLength = getResources().getInteger(R.integer.message_body_max_length)
         messageBodyText
-                .map(new Func1<String, Integer>() {
-                    @Override
-                    public Integer call(String text) {
-                        return maxBodyLength - text.length();
-                    }
-                })
-                .map(new Func1<Integer, String>() {
-                    @Override
-                    public String call(Integer remainingChars) {
-                        return getString(R.string.remaining_characters_text, remainingChars,
-                                maxBodyLength);
-                    }
-                })
-                .subscribe(Properties.textFrom(remainingCharactersTextView));
+                .map({ text -> maxBodyLength - text.length() })
+                .map({ remainingChars -> getString(R.string.remaining_characters_text, remainingChars, maxBodyLength) })
+                .subscribe(Properties.textFrom(remainingCharactersTextView))
 
         sendMessageClick
-                .flatMap(new Func1<Object, Observable<Message>>() {
-                    @Override
-                    public Observable<Message> call(Object object) {
-                        return Observable.combineLatest(
-                                phoneNumberText,
-                                messageBodyText,
-                                new Func2<String, String, Message>() {
-                                    @Override
-                                    public Message call(String phoneNumber, String messageBody) {
-                                        return new Message(phoneNumber, messageBody);
-                                    }
-                                }
-                        ).take(1);
+                .flatMap({
+                    Observable.combineLatest(phoneNumberText, messageBodyText,
+                            { phoneNumber, messageBody -> new Message(phoneNumber, messageBody) }).take(1)})
+                .subscribe({ message ->
+                    if (!message.getPhoneNumber()?.trim()?.equals("")) {
+                        messageBodyEditText.setText("")
+                        messageListAdapter.add(message.getMessageBody())
+                    } else {
+                        phoneNumberEditText.requestFocus()
                     }
                 })
-                .subscribe(new Action1<Message>() {
-                    @Override
-                    public void call(Message message) {
-                        if (message.getPhoneNumber().trim().equals("")) {
-                            phoneNumberEditText.requestFocus();
-                        } else {
-                            messageBodyEditText.setText("");
-                            messageListAdapter.add(message.getMessageBody());
-                        }
-                    }
-                });
 
-        messageListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        messageListView.setAdapter(messageListAdapter);
+        messageListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1)
+        messageListView.setAdapter(messageListAdapter)
+    }
+
+    private void setDummyData() {
+        messageListAdapter.addAll(
+                (1..10).collect({
+                    new Message("xxx-xxxx", "message ${it}") as String
+                })
+        )
     }
 }

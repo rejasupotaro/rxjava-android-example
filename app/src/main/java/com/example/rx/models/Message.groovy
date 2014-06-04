@@ -1,26 +1,16 @@
-package com.example.rx.models;
+package com.example.rx.models
 
-public class Message {
+import groovy.transform.TupleConstructor
 
-    private final String phoneNumber;
+@TupleConstructor
+class Message {
 
-    private final String messageBody;
+    String phoneNumber
 
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public String getMessageBody() {
-        return messageBody;
-    }
-
-    public Message(String phoneNumber, String messageBody) {
-        this.phoneNumber = phoneNumber;
-        this.messageBody = messageBody;
-    }
+    String messageBody
 
     @Override
-    public String toString() {
-        return phoneNumber + " : " + messageBody;
+    String toString() {
+        return phoneNumber + " : " + messageBody
     }
 }
